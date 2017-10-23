@@ -22,18 +22,25 @@ export default class App extends Component<{}> {
 
   //mixins:[TimerMixin]
 
-  state:{
-      
-      }
+  static defaultProps = {
+    duration:1000
+  }
+
+  state = {
+    currentPage:0
+  }
 
   render() {
     return (
       <View style={styles.container}>
 
-        <ScrollView style = {styles.scrollViewBgStyle}
-          horizontal = {true}
-          showsHorizontalScrollIndicator = {false}
-          pagingEnabled = {true}
+        <ScrollView
+            style = {styles.scrollViewBgStyle}
+            horizontal = {true}
+            showsHorizontalScrollIndicator = {false}
+            pagingEnabled = {true}
+            ref = 'scrollView'
+            onMomentumScrollEnd = {(e)=>this. onAnimationEnd(e)}
         >
           {this.getAllData()}
         </ScrollView>
@@ -43,6 +50,30 @@ export default class App extends Component<{}> {
         </View>
       </View>
     );
+  }
+
+  componentDidMount(){
+    this.startTimer();
+  }
+
+  startTimer(){
+    var scrollView = this.refs.scrollView;
+    setInterval(function(){
+      this.state.currentPage;
+      var activePage = 0;
+      //if((this.state.currentPage + 1) >= ImageData.data.length){
+      //  activePage = 0;
+      //}else {
+      //  activePage = (this.state.currentPage + 1);
+      //}
+
+      //this.setState({
+      //  currentPage:activePage
+      //});
+
+      var offsetx = 5 * screenWidht;
+      scrollView.scrollResponderScrollTo({x:offsetx, y:0, animation:true});
+    }, this.props.duration);
   }
 
   // - 返回图片
@@ -67,13 +98,22 @@ export default class App extends Component<{}> {
   getPageView(){
     var indicatorArr = [];
     for(var i= 0; i < ImageData.data.length; i++){
+      var style = (i == this.state.currentPage) ? {color : 'orange'} : {color : 'gray'};
       indicatorArr.push(
-          <Text key = {i} style = {{fontSize:25, color:'black'}}>
+          <Text key = {i} style = {[{fontSize:25, color:'black'}, style]}>
            &bull;
           </Text>
       )
     }
     return indicatorArr;
+  }
+
+  onAnimationEnd(e){
+    var offsetx = e.nativeEvent.contentOffset.x;
+    var currentPage = Math.floor(offsetx / screenWidht);
+    this.setState({
+      currentPage:currentPage
+    });
   }
 }
 
