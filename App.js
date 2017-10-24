@@ -14,20 +14,22 @@ import {
   Image,
   ScrollView
 } from 'react-native';
+
 import ImageData from './ImageData.json';
 import Dimensions from 'Dimensions';
 var screenWidht = Dimensions.get('window').width;
 
-export default class App extends Component<{}> {
 
-  //mixins:[TimerMixin]
+export default class App extends Component<{}> {
+  //mixins: [TimerMixin],
 
   static defaultProps = {
     duration:1000
   }
 
   state = {
-    currentPage:0
+    currentPage:0,
+    title : ImageData.data[0].title
   }
 
   render() {
@@ -40,67 +42,88 @@ export default class App extends Component<{}> {
             showsHorizontalScrollIndicator = {false}
             pagingEnabled = {true}
             ref = 'scrollView'
-            onMomentumScrollEnd = {(e)=>this. onAnimationEnd(e)}
+
+            /** scrollView 的方法监听 */
+            onMomentumScrollEnd = {(e)=>this.onAnimationEnd(e)}
+            onScrollBeginDrag = {(e)=>this.onScrollBeginDrag(e)}
+            onScrollEndDrag = {(e)=>this.onScrollEndDrag(e)}
         >
+
+          {/** 获取轮播图的 view */}
           {this.getAllData()}
+
         </ScrollView>
 
-        <View style = {styles.pageViewStyle} >
-          {this.getPageView()}
+        <View >
+          <View style = {styles.pageViewStyle}>
+            {/** 获取 pageView 的视图 */}
+            {this.getPageView()}
+            <Text style = {styles.titleStyle}>
+              {this.state.title}
+            </Text>
+          </View>
         </View>
       </View>
     );
   }
 
+  /** 开始耗时的操作 */
   componentDidMount(){
     this.startTimer();
   }
 
+  /** 开始计时器 */
   startTimer(){
+
+    /** 获取计时器 */
     var scrollView = this.refs.scrollView;
-    setInterval(function(){
-      this.state.currentPage;
+    var e = this;
+
+    /** 设置计时器执行的方法 */
+    this.timer = setInterval(function(){
       var activePage = 0;
-      //if((this.state.currentPage + 1) >= ImageData.data.length){
-      //  activePage = 0;
-      //}else {
-      //  activePage = (this.state.currentPage + 1);
-      //}
 
-      //this.setState({
-      //  currentPage:activePage
-      //});
+      /** 设置当前的 page */
+      if((e .state.currentPage + 1) >= ImageData.data.length){
+        activePage = 0;
+      }else {
+        activePage = (e .state.currentPage + 1);
+      }
 
-      var offsetx = 5 * screenWidht;
+      /**  设置当前的page 对应的偏移量 */
+      var offsetx = activePage * screenWidht;
+
+      /** scorllView 偏移 */
       scrollView.scrollResponderScrollTo({x:offsetx, y:0, animation:true});
+      e.setState({
+        currentPage:activePage,
+        title : ImageData.data[activePage].title
+      });
+
     }, this.props.duration);
   }
 
-  // - 返回图片
+  // - 轮播图
   getAllData(){
     var subViews = [];
     for(var i = 0; i < ImageData.data.length; i++){
       var model = ImageData.data[i];
       subViews.push(
           <View key = {i} style = {{height:140, backgroundColor:'red'}}>
-            <Image source = {{uri: model.img}} style = {{width:screenWidht, height:120}}>
-              <Text  style = {{marginTop:90}}>
-                {model.title}
-              </Text>
-            </Image>
+            <Image source = {{uri: model.img}} style = {{width:screenWidht, height:120}} />
           </View>
       );
     }
     return subViews;
   }
 
-  // - 返回图片
+  // -  pageVIew
   getPageView(){
     var indicatorArr = [];
     for(var i= 0; i < ImageData.data.length; i++){
       var style = (i == this.state.currentPage) ? {color : 'orange'} : {color : 'gray'};
       indicatorArr.push(
-          <Text key = {i} style = {[{fontSize:25, color:'black'}, style]}>
+          <Text key = {i} style = {[{fontSize:25}, style]}>
            &bull;
           </Text>
       )
@@ -108,12 +131,21 @@ export default class App extends Component<{}> {
     return indicatorArr;
   }
 
+  // - scrollView 的方法
   onAnimationEnd(e){
     var offsetx = e.nativeEvent.contentOffset.x;
     var currentPage = Math.floor(offsetx / screenWidht);
     this.setState({
       currentPage:currentPage
     });
+  }
+
+  onScrollBeginDrag(e){
+    clearInterval(this.timer);
+  }
+
+  onScrollEndDrag(e){
+    this.startTimer();
   }
 }
 
@@ -135,7 +167,14 @@ const styles = StyleSheet.create({
     position:'absolute',
     bottom:0,
     flexDirection:'row',
-    alignItems:'center'
+    alignItems:'center',
+    marginLeft:10
+  },
+
+  titleStyle:{
+    position:'absolute',
+    right:10,
+    color:'rgba(20, 20, 20, 0.4)'
   }
 
 });
